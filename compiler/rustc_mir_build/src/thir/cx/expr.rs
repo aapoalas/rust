@@ -240,6 +240,9 @@ impl<'tcx> ThirBuildCx<'tcx> {
                 debug!(?kind);
                 kind
             }
+            Adjust::GenericReborrow(_mutbl) => {
+                todo!("Reborrow / CoerceShared");
+            }
         };
 
         Expr { temp_lifetime, ty: adjustment.target, span, kind }
