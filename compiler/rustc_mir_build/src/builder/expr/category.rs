@@ -73,7 +73,7 @@ impl Category {
             | ExprKind::ThreadLocalRef(_)
             | ExprKind::OffsetOf { .. }
             | ExprKind::WrapUnsafeBinder { .. }
-           | ExprKind::Reborrow { .. } => Some(Category::Rvalue(RvalueFunc::AsRvalue)),
+            | ExprKind::Reborrow { .. } => Some(Category::Rvalue(RvalueFunc::AsRvalue)),
 
             ExprKind::ConstBlock { .. }
             | ExprKind::Literal { .. }

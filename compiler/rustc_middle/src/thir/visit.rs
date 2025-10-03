@@ -191,7 +191,7 @@ pub fn walk_expr<'thir, 'tcx: 'thir, V: Visitor<'thir, 'tcx>>(
         OffsetOf { container: _, fields: _ } => {}
         ThreadLocalRef(_) => {}
         Yield { value } => visitor.visit_expr(&visitor.thir()[value]),
-        Reborrow { source:_, mutability: _, ty: _ } => {}
+        Reborrow { source: _, mutability: _, ty: _ } => {}
     }
 }
 
