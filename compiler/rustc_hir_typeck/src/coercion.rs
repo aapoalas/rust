@@ -847,21 +847,20 @@ impl<'f, 'tcx> Coerce<'f, 'tcx> {
         self.unify_and(a, b, [], Adjust::ReborrowPin(mut_b))
     }
 
-    /// Applies geneirc reborrowing on type implementing `Reborrow`.
+    /// Applies generic exclusive reborrowing on type implementing `Reborrow`.
     #[instrument(skip(self), level = "trace")]
     fn coerce_reborrow(&self, a: Ty<'tcx>, b: Ty<'tcx>) -> CoerceResult<'tcx> {
         debug_assert!(self.shallow_resolve(a) == a);
         debug_assert!(self.shallow_resolve(b) == b);
 
-        // We need to make sure the two types are compatible for reborrow.'
-        // FIXME(reborrow): this shouldn't be just an equality check.
+        // We need to make sure the two types are compatible for reborrow.
         if a == b {
             // Exclusive reborrowing goes from T -> T.
             return self.unify_and(a, b, [], Adjust::GenericReborrow(ty::Mutability::Mut));
         }
 
-        // FIXME(reborrow): CoerceShared.
-        self.unify_and(a, b, [], Adjust::GenericReborrow(ty::Mutability::Not))
+        // FIXME(reborrow): this we should check equality.
+        self.unify_and(a, b, [], Adjust::GenericReborrow(ty::Mutability::Mut))
     }
 
     fn coerce_from_safe_fn(

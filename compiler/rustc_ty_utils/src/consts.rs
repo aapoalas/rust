@@ -268,6 +268,9 @@ fn recurse_build<'tcx>(
         | ExprKind::ThreadLocalRef(_) => {
             error(GenericConstantTooComplexSub::OperationNotSupported(node.span))?
         }
+        ExprKind::Reborrow { source:_, mutability: _, ty: _ } => {
+            todo!();
+        }
     })
 }
 
@@ -367,6 +370,9 @@ impl<'a, 'tcx> IsThirPolymorphic<'a, 'tcx> {
             | thir::ExprKind::OffsetOf { .. }
             | thir::ExprKind::ThreadLocalRef(_)
             | thir::ExprKind::Yield { .. } => false,
+            thir::ExprKind::Reborrow { source:_, mutability: _, ty: _ } => {
+                todo!();
+            }
         }
     }
     fn pat_is_poly(&mut self, pat: &thir::Pat<'tcx>) -> bool {

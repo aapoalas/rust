@@ -14,7 +14,7 @@ use std::ops::Index;
 use std::sync::Arc;
 
 use rustc_abi::{FieldIdx, Integer, Size, VariantIdx};
-use rustc_ast::{AsmMacro, InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_ast::{AsmMacro, InlineAsmOptions, InlineAsmTemplatePiece, Mutability};
 use rustc_hir as hir;
 use rustc_hir::def_id::DefId;
 use rustc_hir::{BindingMode, ByRef, HirId, MatchSource, RangeEnd};
@@ -570,6 +570,11 @@ pub enum ExprKind<'tcx> {
     /// A `yield` expression.
     Yield {
         value: ExprId,
+    },
+    Reborrow {
+        source: ExprId,
+        mutability: Mutability,
+        ty: Ty<'tcx>,
     },
 }
 
