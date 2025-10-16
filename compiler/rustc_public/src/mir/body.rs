@@ -599,6 +599,8 @@ pub enum Rvalue {
 
     /// Yields the operand unchanged
     Use(Operand),
+
+    Reborrow(Place),
 }
 
 impl Rvalue {
@@ -661,6 +663,7 @@ impl Rvalue {
             },
             Rvalue::ShallowInitBox(_, ty) => Ok(Ty::new_box(*ty)),
             Rvalue::CopyForDeref(place) => place.ty(locals),
+            Rvalue::Reborrow(place) => place.ty(locals),
         }
     }
 }

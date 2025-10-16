@@ -707,6 +707,8 @@ impl<'tcx> Visitor<'tcx> for Checker<'_, 'tcx> {
             Rvalue::WrapUnsafeBinder(..) => {
                 // Unsafe binders are always trivial to create.
             }
+
+            Rvalue::Reborrow(_) => {}
         }
     }
 
