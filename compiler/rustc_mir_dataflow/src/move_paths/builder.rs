@@ -418,7 +418,7 @@ impl<'a, 'tcx, F: Fn(Ty<'tcx>) -> bool> MoveDataBuilder<'a, 'tcx, F> {
                 | NullOp::ContractChecks,
                 _,
             )
-           | Rvalue::Reborrow(..) => {}
+            | Rvalue::Reborrow(..) => {}
         }
     }
 

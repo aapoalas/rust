@@ -740,9 +740,7 @@ impl<'a, 'tcx, Bx: BuilderMethods<'a, 'tcx>> FunctionCx<'a, 'tcx, Bx> {
                 OperandRef { val: operand.val, layout }
             }
             mir::Rvalue::CopyForDeref(_) => bug!("`CopyForDeref` in codegen"),
-            mir::Rvalue::Reborrow(place) => {
-                self.codegen_operand(bx, &mir::Operand::Copy(place))
-            }
+            mir::Rvalue::Reborrow(place) => self.codegen_operand(bx, &mir::Operand::Copy(place)),
         }
     }
 
