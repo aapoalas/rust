@@ -2,18 +2,19 @@
 use std::ops::Reborrow;
 use std::marker::PhantomData;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 struct CustomMarker<'a>(PhantomData<&'a ()>);
 impl<'a> Reborrow for CustomMarker<'a> {}
 
-fn method<'a>(a: CustomMarker<'a>) -> &'a () {
+fn method<'a>(_a: CustomMarker<'a>) -> &'a () {
     &()
 }
 
 fn main() {
     let a = CustomMarker(PhantomData);
     let b = method(a);
-    // let _ = method(a); //~ERROR use of moved value: `a`
+    let c = method(a); //~ERROR use of moved value: `a`
+    println!("{c:?} {b:?} {a:?}");
 }
 
 // fn main_using_normal_references() {
