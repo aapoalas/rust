@@ -11,9 +11,9 @@ fn method<'a>(_a: CustomMarker<'a>) -> &'a () {
 }
 
 fn main() {
-    let a = CustomMarker(PhantomData);
+    let mut a = CustomMarker(PhantomData);
     let b = method(a);
-    let c = method(a); //~ERROR use of moved value: `a`
+    let c = method(a); // should invalidate b
     println!("{c:?} {b:?} {a:?}");
 }
 
