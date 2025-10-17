@@ -2,7 +2,7 @@
 use std::ops::Reborrow;
 use std::marker::PhantomData;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 struct CustomMarker<'a>(PhantomData<&'a ()>);
 impl<'a> Reborrow for CustomMarker<'a> {}
 

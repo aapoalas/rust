@@ -43,7 +43,8 @@ impl Category {
             | ExprKind::PlaceTypeAscription { .. }
             | ExprKind::ValueTypeAscription { .. }
             | ExprKind::PlaceUnwrapUnsafeBinder { .. }
-            | ExprKind::ValueUnwrapUnsafeBinder { .. } => Some(Category::Place),
+            | ExprKind::ValueUnwrapUnsafeBinder { .. }
+            | ExprKind::Reborrow { .. } => Some(Category::Place),
 
             ExprKind::LogicalOp { .. }
             | ExprKind::Match { .. }
@@ -72,8 +73,7 @@ impl Category {
             | ExprKind::AssignOp { .. }
             | ExprKind::ThreadLocalRef(_)
             | ExprKind::OffsetOf { .. }
-            | ExprKind::WrapUnsafeBinder { .. }
-            | ExprKind::Reborrow { .. } => Some(Category::Rvalue(RvalueFunc::AsRvalue)),
+            | ExprKind::WrapUnsafeBinder { .. } => Some(Category::Rvalue(RvalueFunc::AsRvalue)),
 
             ExprKind::ConstBlock { .. }
             | ExprKind::Literal { .. }
