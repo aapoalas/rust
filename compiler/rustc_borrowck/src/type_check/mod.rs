@@ -595,7 +595,7 @@ impl<'a, 'tcx> TypeChecker<'a, 'tcx> {
 impl<'a, 'tcx> Visitor<'tcx> for TypeChecker<'a, 'tcx> {
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
         // check rvalue is Reborrow
-        if let Rvalue::Reborrow(rvalue) = rvalue {
+        if let Rvalue::Reborrow(_, rvalue) = rvalue {
             self.add_generic_reborrow_constraint(location, place, rvalue);
         } else {
             // rest of the cases
@@ -1656,7 +1656,7 @@ impl<'a, 'tcx> Visitor<'tcx> for TypeChecker<'a, 'tcx> {
             | Rvalue::ThreadLocalRef(..)
             | Rvalue::Discriminant(..)
             | Rvalue::NullaryOp(NullOp::OffsetOf(..), _)
-            | Rvalue::Reborrow(_) => {}
+            | Rvalue::Reborrow(..) => {}
         }
     }
 
@@ -2229,7 +2229,7 @@ impl<'a, 'tcx> TypeChecker<'a, 'tcx> {
             | Rvalue::UnaryOp(..)
             | Rvalue::Discriminant(..)
             | Rvalue::WrapUnsafeBinder(..)
-            | Rvalue::Reborrow(_) => None,
+            | Rvalue::Reborrow(..) => None,
 
             Rvalue::Aggregate(aggregate, _) => match **aggregate {
                 AggregateKind::Adt(_, _, _, user_ty, _) => user_ty,
@@ -2471,6 +2471,10 @@ impl<'a, 'tcx> TypeChecker<'a, 'tcx> {
         let dest_ty = dest.ty(self.body, tcx).ty;
         let borrowed_ty = borrowed_place.ty(self.body, tcx).ty;
 
+        // FIXME: for shared reborrow we need to relate the types manually,
+        // field by field with CoerceShared drilling down and down and down.
+        // We cannot just attempt to relate T and <T as CoerceShared>::Target
+        // by calling relate_types.
         self.relate_types(
             borrowed_ty,
             ty::Variance::Covariant,
