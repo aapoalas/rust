@@ -434,8 +434,9 @@ language_item_table! {
     ContractCheckEnsures,     sym::contract_check_ensures,      contract_check_ensures_fn,      Target::Fn, GenericRequirement::None;
 
     // Reborrowing related lang-items
-    Reborrow,                sym::reborrow,            reborrow,                   Target::Trait,          GenericRequirement::Exact(0);
+    Reborrow,                sym::reborrow,            reborrow,                   Target::Trait,          GenericRequirement::Exact(1);
     CoerceShared,            sym::coerce_shared,       coerce_shared,              Target::Trait,          GenericRequirement::Exact(1);
+    CoerceSharedTarget,      sym::coerce_shared_target,coerce_shared_target,       Target::AssocTy,        GenericRequirement::None;
 
     // Field representing types.
     FieldRepresentingType,   sym::field_representing_type, field_representing_type,    Target::Struct,         GenericRequirement::Exact(3);

@@ -1352,7 +1352,7 @@ pub trait CoercePointeeValidated {
 /// that disables the source for reads and writes for the lifetime of the copy.
 #[lang = "reborrow"]
 #[unstable(feature = "reborrow", issue = "145612")]
-pub trait Reborrow {
+pub trait Reborrow<'a> {
     /* compiler built-in */
 }
 
@@ -1360,6 +1360,8 @@ pub trait Reborrow {
 /// that disables the source for writes for the lifetime of the copy.
 #[lang = "coerce_shared"]
 #[unstable(feature = "reborrow", issue = "145612")]
-pub trait CoerceShared<Target: Copy>: Reborrow {
+pub trait CoerceShared<'a>: Reborrow<'a> {
     /* compiler built-in */
+    /// Shared reference result.
+    type Target: Copy + 'a;
 }

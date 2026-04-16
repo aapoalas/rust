@@ -503,19 +503,6 @@ pub(crate) fn reborrow_info<'tcx>(
 
     let source = tcx.type_of(impl_did).instantiate_identity();
     let trait_ref = tcx.impl_trait_ref(impl_did).instantiate_identity();
-    let lifetime_params_count = tcx
-        .generics_of(impl_did)
-        .own_params
-        .iter()
-        .filter(|p| matches!(p.kind, ty::GenericParamDefKind::Lifetime))
-        .count();
-
-    if lifetime_params_count != 1 {
-        return Err(tcx
-            .dcx()
-            .emit_err(errors::CoerceSharedNotSingleLifetimeParam { span, trait_name }));
-    }
-
     assert_eq!(trait_ref.def_id, reborrow_trait);
     let param_env = tcx.param_env(impl_did);
     assert!(!source.has_escaping_bound_vars());
@@ -528,7 +515,6 @@ pub(crate) fn reborrow_info<'tcx>(
         }
     };
 
-    let lifetimes_count = args.iter().filter(|arg| arg.as_region().is_some()).count();
     let data_fields = def
         .non_enum_variant()
         .fields
@@ -542,17 +528,6 @@ pub(crate) fn reborrow_info<'tcx>(
             Some((ty, tcx.def_span(f.did)))
         })
         .collect::<Vec<_>>();
-
-    if lifetimes_count != 1 {
-        let item = tcx.hir_expect_item(impl_did);
-        let _span = if let ItemKind::Impl(hir::Impl { of_trait: Some(of_trait), .. }) = &item.kind {
-            of_trait.trait_ref.path.span
-        } else {
-            tcx.def_span(impl_did)
-        };
-
-        return Err(tcx.dcx().emit_err(errors::CoerceSharedMulti { span, trait_name }));
-    }
 
     if data_fields.is_empty() {
         return Ok(());
@@ -615,25 +590,23 @@ pub(crate) fn coerce_shared_info<'tcx>(
     let trait_name = "CoerceShared";
 
     let coerce_shared_trait = tcx.require_lang_item(LangItem::CoerceShared, span);
+    let coerce_shared_target = tcx.require_lang_item(LangItem::CoerceSharedTarget, span);
 
     let source = tcx.type_of(impl_did).instantiate_identity();
     let trait_ref = tcx.impl_trait_ref(impl_did).instantiate_identity();
-    let lifetime_params_count = tcx
-        .generics_of(impl_did)
-        .own_params
-        .iter()
-        .filter(|p| matches!(p.kind, ty::GenericParamDefKind::Lifetime))
-        .count();
+    assert_eq!(trait_ref.def_id, coerce_shared_trait);
 
-    if lifetime_params_count != 1 {
+    if trait_ref.args.region_at(1).is_static() {
+        // FIXME(@aapoalas): change the error and error message.
         return Err(tcx
             .dcx()
             .emit_err(errors::CoerceSharedNotSingleLifetimeParam { span, trait_name }));
     }
 
-    assert_eq!(trait_ref.def_id, coerce_shared_trait);
+    let target = Ty::new_projection(tcx, coerce_shared_target, [source]);
+
     let Some((target, _obligations)) =
-        structurally_normalize_ty(tcx, &infcx, impl_did, span, trait_ref.args.type_at(1))
+        structurally_normalize_ty(tcx, &infcx, impl_did, span, target)
     else {
         todo!("something went wrong with structurally_normalize_ty");
     };
@@ -642,15 +615,10 @@ pub(crate) fn coerce_shared_info<'tcx>(
     assert!(!source.has_escaping_bound_vars());
 
     let data = match (source.kind(), target.kind()) {
-        (&ty::Adt(def_a, args_a), &ty::Adt(def_b, args_b))
-            if def_a.is_struct() && def_b.is_struct() =>
-        {
-            // Check that both A and B have exactly one lifetime argument, and that they have the
-            // same number of data fields that is not more than 1. The eventual intention is to
-            // support multiple lifetime arguments (with the reborrowed lifetimes inferred from
-            // usage one way or another) and multiple data fields with B allowed to leave out fields
-            // from A. The current state is just the simplest choice.
-            let a_lifetimes_count = args_a.iter().filter(|arg| arg.as_region().is_some()).count();
+        (&ty::Adt(def_a, _), &ty::Adt(def_b, args_b)) if def_a.is_struct() && def_b.is_struct() => {
+            // Check that both A and B have the same number of data fields that is not more than 1.
+            // The eventual intention is to support multiple data fields with B allowed to leave out
+            // fields from A. The current state is just the simplest choice.
             let a_data_fields = def_a
                 .non_enum_variant()
                 .fields
@@ -665,7 +633,6 @@ pub(crate) fn coerce_shared_info<'tcx>(
                     Some((i, a, tcx.def_span(f.did)))
                 })
                 .collect::<Vec<_>>();
-            let b_lifetimes_count = args_b.iter().filter(|arg| arg.as_region().is_some()).count();
             let b_data_fields = def_b
                 .non_enum_variant()
                 .fields
@@ -681,9 +648,7 @@ pub(crate) fn coerce_shared_info<'tcx>(
                 })
                 .collect::<Vec<_>>();
 
-            if a_lifetimes_count != 1
-                || b_lifetimes_count != 1
-                || a_data_fields.len() > 1
+            if a_data_fields.len() > 1
                 || b_data_fields.len() > 1
                 || a_data_fields.len() != b_data_fields.len()
             {
