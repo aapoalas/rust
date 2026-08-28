@@ -990,10 +990,18 @@ impl<'f, 'tcx> Coerce<'f, 'tcx> {
             // CoerceShared cannot be T -> T.
             return Err(TypeError::Mismatch);
         }
-        let Some(coerce_shared_trait_did) = self.tcx.lang_items().coerce_shared() else {
+        let (Some(coerce_shared_trait_did), Some(coerce_shared_target_did)) =
+            (self.tcx.lang_items().coerce_shared(), self.tcx.lang_items().coerce_shared_target())
+        else {
             return Err(TypeError::Mismatch);
         };
-        let coerce_shared_trait_ref = ty::TraitRef::new(self.tcx, coerce_shared_trait_did, [a, b]);
+        let coerce_shared_trait_ref = ty::TraitRef::new(self.tcx, coerce_shared_trait_did, [a]);
+        let proj = Ty::new_projection_from_args(self.tcx, ty::IsRigid::yes_if_next_solver(self.tcx), coerce_shared_target_did, coerce_shared_trait_ref.args);
+        coerce_shared_trait_ref.args
+        ty::ProjectionPredicate {
+            projection_term: ty::AliasTerm::new_from_def_id(self.tcx, def_id, args)
+        }
+        ty::AliasTerm::new_from_def_id(self.tcx, coerce_shared_target_did, [a])
         let obligation = traits::Obligation::new(
             self.tcx,
             ObligationCause::dummy(),

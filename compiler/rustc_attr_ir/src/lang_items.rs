@@ -453,7 +453,8 @@ language_item_table! {
 
     // Reborrowing related lang-items
     Reborrow,                sym::reborrow,            reborrow,                   Target::Trait,          GenericRequirement::Exact(0);
-    CoerceShared,            sym::coerce_shared,       coerce_shared,              Target::Trait,          GenericRequirement::Exact(1);
+    CoerceShared,            sym::coerce_shared,       coerce_shared,              Target::Trait,          GenericRequirement::Exact(0);
+    CoerceSharedTarget,      sym::coerce_shared_target,coerce_shared_target,       Target::AssocTy,        GenericRequirement::Exact(0);
 
     // Field representing types.
     FieldRepresentingType,   sym::field_representing_type, field_representing_type,    Target::Struct,         GenericRequirement::Exact(3);

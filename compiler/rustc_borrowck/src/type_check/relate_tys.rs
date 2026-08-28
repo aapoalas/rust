@@ -55,6 +55,16 @@ impl<'a, 'tcx> TypeChecker<'a, 'tcx> {
             .relate(a, b)?;
         Ok(())
     }
+
+    pub(super) fn relate_coerce_shared(
+        &mut self,
+        a: Ty<'tcx>,
+        b: Ty<'tcx>,
+        locations: Locations,
+    ) -> Result<(), NoSolution> {
+        CoerceSharedRelating::new(self, locations, UniverseInfo::relate(a, b)).relate(a, b)?;
+        Ok(())
+    }
 }
 
 struct NllTypeRelating<'a, 'b, 'tcx> {
@@ -628,3 +638,102 @@ impl<'b, 'tcx> PredicateEmittingRelation<InferCtxt<'tcx>> for NllTypeRelating<'_
         );
     }
 }
+
+// struct CoerceSharedRelating<'a, 'b, 'tcx> {
+//     type_checker: &'a mut TypeChecker<'b, 'tcx>,
+
+//     /// Where (and why) is this relation taking place?
+//     locations: Locations,
+
+//     /// Information so that error reporting knows what types we are relating
+//     /// when reporting a bound region error.
+//     universe_info: UniverseInfo<'tcx>,
+// }
+
+// impl<'b, 'tcx> TypeRelation<TyCtxt<'tcx>> for CoerceSharedRelating<'_, 'b, 'tcx> {
+//     fn cx(&self) -> TyCtxt<'tcx> {
+//         self.type_checker.infcx.tcx
+//     }
+
+//     fn relate_ty_args(
+//         &mut self,
+//         a_ty: <TyCtxt<'tcx> as ty::Interner>::Ty,
+//         b_ty: <TyCtxt<'tcx> as ty::Interner>::Ty,
+//         ty_def_id: <TyCtxt<'tcx> as ty::Interner>::DefId,
+//         a_args: <TyCtxt<'tcx> as ty::Interner>::GenericArgs,
+//         b_args: <TyCtxt<'tcx> as ty::Interner>::GenericArgs,
+//         mk: impl FnOnce(
+//             <TyCtxt<'tcx> as ty::Interner>::GenericArgs,
+//         ) -> <TyCtxt<'tcx> as ty::Interner>::Ty,
+//     ) -> ty::relate::solver_relating::RelateResult<TyCtxt<'tcx>, <TyCtxt<'tcx> as ty::Interner>::Ty>
+//     {
+//         todo!()
+//     }
+
+//     fn relate_with_variance<T: Relate<TyCtxt<'tcx>>>(
+//         &mut self,
+//         variance: rustc_infer::infer::canonical::ir::Variance,
+//         info: ty::VarianceDiagInfo<TyCtxt<'tcx>>,
+//         a: T,
+//         b: T,
+//     ) -> ty::relate::solver_relating::RelateResult<TyCtxt<'tcx>, T> {
+//         todo!()
+//     }
+
+//     fn tys(
+//         &mut self,
+//         a: <TyCtxt<'tcx> as ty::Interner>::Ty,
+//         b: <TyCtxt<'tcx> as ty::Interner>::Ty,
+//     ) -> ty::relate::solver_relating::RelateResult<TyCtxt<'tcx>, <TyCtxt<'tcx> as ty::Interner>::Ty>
+//     {
+//         todo!()
+//     }
+
+//     fn regions(
+//         &mut self,
+//         a: rustc_infer::infer::canonical::ir::Region<TyCtxt<'tcx>>,
+//         b: rustc_infer::infer::canonical::ir::Region<TyCtxt<'tcx>>,
+//     ) -> ty::relate::solver_relating::RelateResult<
+//         TyCtxt<'tcx>,
+//         rustc_infer::infer::canonical::ir::Region<TyCtxt<'tcx>>,
+//     > {
+//         let sub = self.type_checker.universal_regions.to_region_vid(a);
+//         let sup = self.type_checker.universal_regions.to_region_vid(b);
+//         self.type_checker.constraints.outlives_constraints.push(OutlivesConstraint {
+//             sup,
+//             sub,
+//             locations: self.locations,
+//             span: self.locations.span(self.type_checker.body),
+//             category: ConstraintCategory::Assignment,
+//             variance_info: ty::VarianceDiagInfo::None,
+//             from_closure: false,
+//         });
+
+//         Ok(a)
+//     }
+
+//     fn consts(
+//         &mut self,
+//         a: <TyCtxt<'tcx> as ty::Interner>::Const,
+//         b: <TyCtxt<'tcx> as ty::Interner>::Const,
+//     ) -> ty::relate::solver_relating::RelateResult<
+//         TyCtxt<'tcx>,
+//         <TyCtxt<'tcx> as ty::Interner>::Const,
+//     > {
+//         todo!()
+//     }
+
+//     fn binders<T>(
+//         &mut self,
+//         a: rustc_infer::infer::canonical::ir::Binder<TyCtxt<'tcx>, T>,
+//         b: rustc_infer::infer::canonical::ir::Binder<TyCtxt<'tcx>, T>,
+//     ) -> ty::relate::solver_relating::RelateResult<
+//         TyCtxt<'tcx>,
+//         rustc_infer::infer::canonical::ir::Binder<TyCtxt<'tcx>, T>,
+//     >
+//     where
+//         T: Relate<TyCtxt<'tcx>>,
+//     {
+//         todo!()
+//     }
+// }

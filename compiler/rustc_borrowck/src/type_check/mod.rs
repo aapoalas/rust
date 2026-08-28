@@ -1,5 +1,6 @@
 //! This pass type-checks the MIR to ensure it is not broken.
 
+use std::marker::PhantomData;
 use std::rc::Rc;
 use std::{fmt, iter, mem};
 
@@ -13,6 +14,7 @@ use rustc_hir::def::DefKind;
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::{IndexSlice, IndexVec};
 use rustc_infer::infer::canonical::QueryRegionConstraints;
+use rustc_infer::infer::canonical::ir::Unnormalized;
 use rustc_infer::infer::outlives::env::RegionBoundPairs;
 use rustc_infer::infer::region_constraints::RegionConstraintData;
 use rustc_infer::infer::{
@@ -34,6 +36,7 @@ use rustc_mir_dataflow::points::DenseLocationMap;
 use rustc_span::def_id::CRATE_DEF_ID;
 use rustc_span::{Span, Spanned, sym};
 use rustc_trait_selection::infer::InferCtxtExt;
+use rustc_trait_selection::traits::NormalizeExt;
 use rustc_trait_selection::traits::query::type_op::custom::scrape_region_constraints;
 use rustc_trait_selection::traits::query::type_op::{self, TypeOp, TypeOpOutput};
 use tracing::{debug, instrument, trace};
@@ -2558,7 +2561,13 @@ impl<'a, 'tcx> TypeChecker<'a, 'tcx> {
                 type_op::custom::CustomTypeOp::new(
                     |ocx| {
                         let coerce_shared_trait_ref =
-                            ty::TraitRef::new(tcx, coerce_shared_trait_did, [src_ty, dst_ty]);
+                            ty::TraitRef::new(tcx, coerce_shared_trait_did, [src_ty]);
+                        // ty::AliasTerm::new_from_def_id(tcx, coerce_shared_target_did, [src_ty.into()])
+                        // let normalize = self
+                        //     .infcx
+                        //     .at(&ObligationCause::dummy(), self.infcx.param_env)
+                        //     .normalize(Unnormalized::new_wip(coerce_shared_trait_ref));
+                        // self.relate_types(a, v, b, locations, category);
                         let obligation = Obligation::new(
                             tcx,
                             ObligationCause::dummy(),
