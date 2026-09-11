@@ -1366,7 +1366,9 @@ pub macro Reborrow($item:item) {
 /// that disables the source for writes for the lifetime of the copy.
 #[lang = "coerce_shared"]
 #[unstable(feature = "reborrow", issue = "145612")]
-pub trait CoerceShared<Target: Copy>: Reborrow {
+pub trait CoerceShared: Reborrow {
+    /// Shared version of the reborrowable type.
+    type Target: Copy;
     /* compiler built-in */
 }
 

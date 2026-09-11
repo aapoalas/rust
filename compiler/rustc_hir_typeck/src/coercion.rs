@@ -309,7 +309,7 @@ impl<'f, 'tcx> Coerce<'f, 'tcx> {
                                 .lang_items()
                                 .reborrow()
                                 .expect("Unexpectedly using core/std without reborrow"),
-                            [b],
+                            [a],
                             self.fcx.param_env,
                         )
                         .must_apply_modulo_regions() =>
@@ -342,7 +342,21 @@ impl<'f, 'tcx> Coerce<'f, 'tcx> {
                 // It cannot convert closures that require unsafe.
                 self.coerce_closure_to_fn(a, b)
             }
-            ty::Adt(_, _) if self.tcx.features().reborrow() => {
+            ty::Adt(_, _)
+                if self.tcx.features().reborrow()
+                    && self
+                        .fcx
+                        .infcx
+                        .type_implements_trait(
+                            self.tcx
+                                .lang_items()
+                                .coerce_shared()
+                                .expect("Unexpectedly using core/std without coerce_shared"),
+                            [a],
+                            self.fcx.param_env,
+                        )
+                        .must_apply_modulo_regions() =>
+            {
                 let reborrow_coerce = self.commit_if_ok(|_| self.coerce_shared_reborrow(a, b));
                 if reborrow_coerce.is_ok() {
                     reborrow_coerce
@@ -990,33 +1004,16 @@ impl<'f, 'tcx> Coerce<'f, 'tcx> {
             // CoerceShared cannot be T -> T.
             return Err(TypeError::Mismatch);
         }
-        let Some(coerce_shared_trait_did) = self.tcx.lang_items().coerce_shared() else {
+        let Some(coerce_shared_target_did) = self.tcx.lang_items().coerce_shared_target() else {
             return Err(TypeError::Mismatch);
         };
-        let coerce_shared_trait_ref = ty::TraitRef::new(self.tcx, coerce_shared_trait_did, [a, b]);
-        let obligation = traits::Obligation::new(
+        let target = Ty::new_projection_from_args(
             self.tcx,
-            ObligationCause::dummy(),
-            self.param_env,
-            ty::Binder::dummy(coerce_shared_trait_ref),
+            ty::IsRigid::No,
+            coerce_shared_target_did,
+            self.tcx.mk_args(&[ty::GenericArg::from(a)]),
         );
-        let ocx = ObligationCtxt::new(&self.infcx);
-        ocx.register_obligation(obligation);
-        let errs = ocx.evaluate_obligations_error_on_ambiguity();
-        if errs.no_errors() {
-            Ok(InferOk {
-                value: (
-                    vec![Adjustment {
-                        kind: Adjust::GenericReborrow(ty::Mutability::Not),
-                        target: b,
-                    }],
-                    b,
-                ),
-                obligations: ocx.into_pending_obligations(),
-            })
-        } else {
-            Err(TypeError::Mismatch)
-        }
+        self.unify(b, target, ForceLeakCheck::No)
     }
 
     fn coerce_from_fn_pointer(
